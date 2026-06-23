@@ -1,0 +1,24 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: build
+        run: dotnet build -c Release
+      - name: selftest (3 HIGH findings, exit 2)
+        run: |
+          set +e
+          dotnet run -c Release --no-build -- --selftest > out.json; code=$?
+          cat out.json
+          echo "exit=$code"
+          grep -q '"tool": "comwatch"' out.json || exit 1
+          grep -q '"id": "com-hijack"' out.json || { echo "missing com-hijack"; exit 1; }
+          grep -q '"high_count": 3' out.json || { echo "expected 3 HIGH"; exit 1; }
+          [ "$code" = "2" ] || { echo "expected exit 2"; exit 1; }
+      - name: sigma output
+        run: dotnet run -c Release --no-build -- --selftest --format sigma | grep -q 'attack.t1546.015'
