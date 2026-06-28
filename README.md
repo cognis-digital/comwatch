@@ -17,6 +17,35 @@ Part of the **[Cognis Neural Suite](https://github.com/cognis-digital)**. `comwa
 
 It emits structured JSON **or a ready-to-deploy Sigma rule** for the hijacked CLSIDs it finds. Defensive triage only.
 
+
+<!-- cognis:example:start -->
+## 🔎 Example output
+
+**Sample result format** _(illustrative values — run on your own data for real findings):_
+
+```
+{
+  "id": "1234567890",
+  "name": "John Doe",
+  "email": "johndoe@example.com",
+  "phone": "+1-555-1234",
+  "complaints": [
+    {
+      "id": "ABC123",
+      "description": "Poor customer service",
+      "status": "open"
+    },
+    {
+      "id": "DEF456",
+      "description": "Product defect",
+      "status": "resolved"
+    }
+  ]
+}
+```
+
+<!-- cognis:example:end -->
+
 ## Build / run
 
 ```bash
