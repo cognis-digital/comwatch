@@ -1,24 +1,73 @@
 name: ci
 on: [push, pull_request]
+
 jobs:
   build-test:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
+
       - name: build
         run: dotnet build -c Release
-      - name: selftest (3 HIGH findings, exit 2)
+
+      - name: unit tests (xUnit)
+        run: dotnet test tests/ComWatch.Tests.csproj -c Release --verbosity normal
+
+      - name: selftest — expect 9 HIGH findings and exit 2
+        shell: bash
         run: |
           set +e
-          dotnet run -c Release --no-build -- --selftest > out.json; code=$?
+          dotnet run -c Release --no-build -- --selftest -q > out.json; code=$?
           cat out.json
           echo "exit=$code"
-          grep -q '"tool": "comwatch"' out.json || exit 1
+          grep -q '"tool": "comwatch"' out.json || { echo "missing tool banner"; exit 1; }
           grep -q '"id": "com-hijack"' out.json || { echo "missing com-hijack"; exit 1; }
-          grep -q '"high_count": 3' out.json || { echo "expected 3 HIGH"; exit 1; }
+          grep -q '"high_count": 9' out.json || { echo "expected 9 HIGH"; exit 1; }
           [ "$code" = "2" ] || { echo "expected exit 2"; exit 1; }
-      - name: sigma output
-        run: dotnet run -c Release --no-build -- --selftest --format sigma | grep -q 'attack.t1546.015'
+
+      - name: clean export — expect no findings and exit 0
+        shell: bash
+        run: |
+          set +e
+          dotnet run -c Release --no-build -- examples/clean.reg -q > clean.json; code=$?
+          grep -q '"high_count": 0' clean.json || { echo "clean.reg should have 0 HIGH"; exit 1; }
+          [ "$code" = "0" ] || { echo "expected exit 0 on clean.reg"; exit 1; }
+
+      - name: sarif is valid JSON with results
+        shell: bash
+        run: |
+          dotnet run -c Release --no-build -- --selftest --format sarif -q > out.sarif
+          python -c "import json; d=json.load(open('out.sarif')); assert d['version']=='2.1.0'; assert len(d['runs'][0]['results'])>=9; print('sarif ok')"
+
+      - name: sigma and cef render
+        shell: bash
+        run: |
+          dotnet run -c Release --no-build -- --selftest --format sigma -q | grep -q 'attack.t1546.015'
+          dotnet run -c Release --no-build -- examples/hijacked.reg --format cef -q | grep -q '^CEF:0|Cognis Digital|comwatch|'
+
+  code-scanning:
+    # Publish comwatch's own SARIF into GitHub's Security tab as a live demo.
+    needs: build-test
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet build -c Release
+      - name: emit SARIF for the hijacked example
+        run: dotnet run -c Release --no-build -- examples/hijacked.reg --format sarif -q > comwatch.sarif || true
+      - name: upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: comwatch.sarif
+        continue-on-error: true

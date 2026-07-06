@@ -1,4 +1,11 @@
 obj/
 bin/
-*.reg
+dist/
+tests/obj/
+tests/bin/
 out.json
+out.sarif
+clean.json
+*.reg
+# keep the bundled example exports
+!examples/*.reg

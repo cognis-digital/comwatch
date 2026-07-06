@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>ComWatch.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Compile the engine sources directly (no CLI Main in the test asm). -->
+    <Compile Include="../src/Model.cs" />
+    <Compile Include="../src/RegParser.cs" />
+    <Compile Include="../src/Detectors.cs" />
+    <Compile Include="../src/Reporters.cs" />
+    <Compile Include="../src/Samples.cs" />
+  </ItemGroup>
+
+</Project>

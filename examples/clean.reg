@@ -1,0 +1,14 @@
+Windows Registry Editor Version 5.00
+
+; A benign export: legitimate HKLM COM servers and a normal Run entry.
+; comwatch should report NO findings (exit 0) on this file.
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{0002DF01-0000-0000-C000-000000000046}\InprocServer32]
+@="C:\\Windows\\System32\\ieframe.dll"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Run]
+"SecurityHealth"="C:\\Windows\\System32\\SecurityHealthSystray.exe"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon]
+"Shell"="explorer.exe"
+"Userinit"="C:\\Windows\\system32\\userinit.exe,"

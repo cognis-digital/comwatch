@@ -1,0 +1,21 @@
+Windows Registry Editor Version 5.00
+
+; A synthetic compromised export used by the README examples and demos.
+; All values are fabricated for demonstration — no real host or key material.
+; comwatch should report several HIGH findings (exit 2) on this file.
+
+; COM hijack: user-hive CLSID override pointing at AppData.
+[HKEY_CURRENT_USER\Software\Classes\CLSID\{0002DF01-0000-0000-C000-000000000046}\InprocServer32]
+@="C:\\Users\\victim\\AppData\\Roaming\\evil.dll"
+
+; TreatAs redirection to another CLSID.
+[HKEY_CURRENT_USER\Software\Classes\CLSID\{11111111-2222-3333-4444-555555555555}\TreatAs]
+@="{99999999-8888-7777-6666-555555555555}"
+
+; Run key persistence invoking a LOLBin from a user-writable path.
+[HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run]
+"Updater"="rundll32.exe C:\\Users\\victim\\AppData\\Local\\Temp\\x.dll,Start"
+
+; IFEO debugger hijack of an accessibility binary.
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\sethc.exe]
+"Debugger"="C:\\Windows\\System32\\cmd.exe"
