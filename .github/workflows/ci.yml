@@ -43,12 +43,18 @@ jobs:
       - name: sarif is valid JSON with results
         shell: bash
         run: |
-          dotnet run -c Release --no-build -- --selftest --format sarif -q > out.sarif
+          # comwatch exits 2 by design when findings are at/above --fail-on (the
+          # selftest sample is intentionally dirty), so tolerate it here and let
+          # the JSON validation below be the real gate.
+          dotnet run -c Release --no-build -- --selftest --format sarif -q > out.sarif || true
           python -c "import json; d=json.load(open('out.sarif')); assert d['version']=='2.1.0'; assert len(d['runs'][0]['results'])>=9; print('sarif ok')"
 
       - name: sigma and cef render
         shell: bash
         run: |
+          # Dirty inputs make comwatch exit 2 on purpose; disable pipefail so the
+          # grep match (not the by-design exit code) determines success.
+          set +o pipefail
           dotnet run -c Release --no-build -- --selftest --format sigma -q | grep -q 'attack.t1546.015'
           dotnet run -c Release --no-build -- examples/hijacked.reg --format cef -q | grep -q '^CEF:0|Cognis Digital|comwatch|'
 
